@@ -3,16 +3,16 @@ import react from '@vitejs/plugin-react-swc'
 import { VitePWA } from 'vite-plugin-pwa'
 // https://vite.dev/config/
 export default defineConfig({
-  base: 'my-website/',
+  base: 'my-hamster/',
   plugins: [react(),
   VitePWA({
     registerType: 'autoUpdate',
     includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
     manifest:
     {
-      name: "Weather Report",
-      short_name: 'AN318',
-      description: 'แอบพลิเคชัน สำหรับ ดูสภาพอากาศ',
+      name: "Hamster Dating",
+      short_name: 'DHamster',
+      description: 'แอบพลิเคชัน สำหรับ คุยกับ Hamster น่ารัก',
       theme_color: '#ffffff',
       icons:
       [
