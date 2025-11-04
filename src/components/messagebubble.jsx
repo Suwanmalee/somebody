@@ -9,8 +9,8 @@ export default function MessageBubble({ message }) {
       <div
         className={`max-w-xs md:max-w-sm px-4 py-2 rounded-2xl shadow ${
           isUser
-            ? 'bg-blue-500 text-white rounded-br-none'
-            : 'bg-gray-200 text-gray-800 rounded-bl-none'
+            ? 'bg-gradient-to-r from-violet-500 to-pink-500 text-white rounded-br-none'
+            : 'bg-white/10 text-violet-100 rounded-bl-none'
         }`}
       >
         {text}
@@ -18,3 +18,4 @@ export default function MessageBubble({ message }) {
     </div>
   );
 }
+

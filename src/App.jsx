@@ -12,6 +12,8 @@ import {
 } from 'lucide-react'; 
 
 import { AudioLines } from 'lucide-react';
+import { Speech } from 'lucide-react';
+
 
 
 const DUMMY_HAMSTERS = [
@@ -73,7 +75,7 @@ const HamsterCard = React.forwardRef(
   ({ hamster, onSwipe }, ref) => {
     const [style, setStyle] = useState({
       transform: 'translateX(0px) rotate(0deg)',
-      transition: 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)', 
+      transition: 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
     });
     const isDraggingRef = useRef(false);
     const startXRef = useRef(0);
@@ -92,8 +94,8 @@ const HamsterCard = React.forwardRef(
       const currentX = e.clientX || e.touches[0].clientX;
       const deltaX = currentX - startXRef.current;
       const rotation = deltaX / 20;
-
       positionRef.current = { x: deltaX, rotation };
+
       setStyle((s) => ({
         ...s,
         transform: `translateX(${deltaX}px) rotate(${rotation}deg)`,
@@ -103,13 +105,9 @@ const HamsterCard = React.forwardRef(
     const handleDragEnd = () => {
       if (!isDraggingRef.current) return;
       isDraggingRef.current = false;
-
       const { x } = positionRef.current;
-      let direction = null;
-
       if (Math.abs(x) > SWIPE_THRESHOLD) {
-        direction = x > 0 ? 'right' : 'left';
-        swipeOut(direction);
+        swipeOut(x > 0 ? 'right' : 'left');
       } else {
         snapBack();
       }
@@ -119,76 +117,98 @@ const HamsterCard = React.forwardRef(
       positionRef.current = { x: 0, rotation: 0 };
       setStyle({
         transform: 'translateX(0px) rotate(0deg)',
-        transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)', 
+        transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
       });
     };
 
     const swipeOut = (direction) => {
       const x = direction === 'right' ? 500 : -500;
       const rotation = direction === 'right' ? 30 : -30;
-
       setStyle({
         transform: `translateX(${x}px) rotate(${rotation}deg)`,
         transition: `transform ${SWIPE_OUT_DURATION}ms ease-in`,
       });
-
-      // เรียก callback onSwipe (like/nope) หลังจาก animation จบ
-      setTimeout(() => {
-        onSwipe(direction);
-      }, SWIPE_OUT_DURATION);
+      setTimeout(() => onSwipe(direction), SWIPE_OUT_DURATION);
     };
 
-    // เปิดให้ component แม่เรียกใช้ฟังก์ชัน swipeOut ได้ (สำหรับปุ่ม)
     React.useImperativeHandle(ref, () => ({
-      swipe: (direction) => {
-        swipeOut(direction);
-      },
+      swipe: (direction) => swipeOut(direction),
     }));
 
     return (
-      <div
-        className="absolute w-full h-full cursor-grab active:cursor-grabbing"
-        onMouseDown={handleDragStart}
-        onMouseMove={handleDragMove}
-        onMouseUp={handleDragEnd}
-        onMouseLeave={handleDragEnd}
-        onTouchStart={handleDragStart}
-        onTouchMove={handleDragMove}
-        onTouchEnd={handleDragEnd}
-        style={style}
+      // ✅ ชั้นนอกสำหรับ Floating animation เท่านั้น
+      <motion.div
+        className="absolute w-full h-full"
+        animate={{ y: [0, -6, 0] }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
       >
-        <div className="relative w-full h-full bg-slate-100 rounded-2xl shadow-2xl overflow-hidden">
-          <img
-            src={hamster.img}
-            alt={hamster.name}
-            className="w-full h-3/4 object-cover"
-            draggable="false"
-          />
-          <div className="p-5 absolute bottom-0 left-0 right-0 h-1/4 bg-slate-100">
-            <h2 className="text-2xl font-bold text-gray-800">
-              {hamster.name}, {hamster.age}
-            </h2>
-            <p className="text-gray-600 mt-2 text-sm">{hamster.bio}</p>
-          </div>
+        {/* ✅ ชั้นในควบคุมการ drag / rotate */}
+        <div
+          className="w-full h-full cursor-grab active:cursor-grabbing"
+          onMouseDown={handleDragStart}
+          onMouseMove={handleDragMove}
+          onMouseUp={handleDragEnd}
+          onMouseLeave={handleDragEnd}
+          onTouchStart={handleDragStart}
+          onTouchMove={handleDragMove}
+          onTouchEnd={handleDragEnd}
+          style={style}
+        >
+          <div className="relative w-full h-full bg-slate-100 rounded-2xl shadow-2xl overflow-hidden">
+            {/* ✅ รูปภาพ + Gradient fade */}
+            <div className="relative w-full h-3/4">
+              <img
+                src={hamster.img}
+                alt={hamster.name}
+                className="w-full h-full object-cover select-none"
+                draggable="false"
+              />
+              <div className="absolute bottom-0 left-0 right-0 h-1/4 bg-gradient-to-t from-slate-100/90 via-slate-100/40 to-transparent" />
+            </div>
 
-          <div
-            className={`absolute top-10 left-10 text-4xl font-bold text-emerald-500 border-4 border-blue-500 px-4 py-2 rounded-lg transform -rotate-20 ${
-              positionRef.current.x > SWIPE_THRESHOLD / 3 ? 'opacity-100' : 'opacity-0'
-            } transition-opacity duration-200`}
-            style={{ opacity: positionRef.current.x / (SWIPE_THRESHOLD / 2) }}
-          >
-            LIKE
-          </div>
-          <div
-            className={`absolute top-10 right-10 text-4xl font-bold text-rose-500 border-4 border-blue-500 px-4 py-2 rounded-lg transform rotate-20 ${
-              positionRef.current.x < -SWIPE_THRESHOLD / 3 ? 'opacity-100' : 'opacity-0'
-            } transition-opacity duration-200`}
-            style={{ opacity: -positionRef.current.x / (SWIPE_THRESHOLD / 2) }}
-          >
-            DISLIKE
+            {/* ข้อมูล */}
+            <div className="p-5 absolute bottom-0 left-0 right-0 h-1/4 bg-slate-100">
+              <h2 className="text-2xl font-bold text-gray-800">
+                {hamster.name}, {hamster.age}
+              </h2>
+              <p className="text-gray-600 mt-2 text-sm">{hamster.bio}</p>
+            </div>
+
+            {/* ✅ Overlay LIKE / DISLIKE */}
+            <motion.div
+              className="absolute top-10 left-10 text-4xl font-extrabold text-transparent bg-clip-text 
+             bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 
+             border-2 border-emerald-300/70 px-5 py-2 rounded-xl 
+             backdrop-blur-md bg-white/10 
+             shadow-[0_0_20px_rgba(45,212,191,0.45)] 
+             transform -rotate-12"
+              animate={{
+                opacity: positionRef.current.x > SWIPE_THRESHOLD / 3 ? 1 : 0,
+                scale: positionRef.current.x > SWIPE_THRESHOLD / 3 ? 1 : 0.9,
+              }}
+              transition={{ duration: 0.25 }}
+            >
+              LIKE
+            </motion.div>
+
+            <motion.div
+              className="absolute top-10 right-10 text-4xl font-extrabold text-transparent bg-clip-text 
+             bg-gradient-to-r from-rose-500 via-pink-500 to-fuchsia-500 
+             border-2 border-pink-400/60 px-5 py-2 rounded-xl 
+             backdrop-blur-md bg-white/10 
+             shadow-[0_0_20px_rgba(236,72,153,0.45)] 
+             transform rotate-12"
+              animate={{
+                opacity: positionRef.current.x < -SWIPE_THRESHOLD / 3 ? 1 : 0,
+                scale: positionRef.current.x < -SWIPE_THRESHOLD / 3 ? 1 : 0.9,
+              }}
+              transition={{ duration: 0.25 }}
+            >
+              DISLIKE
+            </motion.div>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 );
@@ -251,7 +271,7 @@ export default function App() {
   };
 
   return (
-    <div className="font-inter flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50 p-4 overflow-hidden">
+    <div className="font-inter flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-200 via-slate-200 to-indigo-200 p-4 overflow-hidden">
       
       <div className="flex items-center text-gray-700 mb-4">
         <AudioLines className="w-8 h-8 mr-2 text-sky-600" /> {/* ใช้ Lucide PawPrint */}

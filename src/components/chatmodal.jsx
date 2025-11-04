@@ -1,12 +1,18 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { X, PawPrint, Send } from 'lucide-react';
-import MessageBubble from './messagebubble.jsx';
-// --- (เพิ่มใหม่) Component: ChatModal ---
-// Component สำหรับหน้าต่างแชท
-export default function ChatModal({ onClose, messages, onSendMessage, chatInput, setChatInput }) {
+import React, { useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Send } from "lucide-react";
+import MessageBubble from "./messagebubble.jsx";
+
+export default function ChatModal({
+  onClose,
+  messages,
+  onSendMessage,
+  chatInput,
+  setChatInput,
+  addBotReply, // ฟังก์ชันใหม่
+}) {
   const chatBodyRef = useRef(null);
 
-  // ทำให้ scroll ลงล่างสุดเมื่อมีข้อความใหม่
   useEffect(() => {
     if (chatBodyRef.current) {
       chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
@@ -15,59 +21,93 @@ export default function ChatModal({ onClose, messages, onSendMessage, chatInput,
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!chatInput.trim()) return;
     onSendMessage();
+    setTimeout(() => addBotReply(), 1200 + Math.random() * 1500); // ตอบกลับหลัง 1.2–2.7 วิ
   };
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 flex items-center justify-center bg-[#0f0c1f] overflow-hidden z-50"
       onClick={onClose}
     >
+      {/* 🔮 Animated gradient background */}
+      <motion.div
+        className="absolute inset-0 bg-[linear-gradient(135deg,_#6e79ff_0%,_#b38bfa_40%,_#f1b8ff_100%)] opacity-20 blur-3xl"
+        animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+        transition={{ duration: 12, ease: "easeInOut", repeat: Infinity }}
+        style={{ backgroundSize: "200% 200%" }}
+      />
+
+      {/* 🪞 Chat Container */}
       <div
-        className="relative w-full max-w-md h-[70vh] bg-white rounded-2xl shadow-xl flex flex-col overflow-hidden"
-        onClick={(e) => e.stopPropagation()} // ป้องกันการปิด modal เมื่อคลิกข้างใน
+        className="relative w-[380px] h-[70vh] rounded-2xl bg-[#151227]/80 backdrop-blur-2xl border border-white/10 shadow-[0_0_40px_rgba(134,104,255,0.25)] flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-gray-50">
-          <div className="flex items-center gap-2">
-            <PawPrint className="w-6 h-6 text-orange-600" />
-            <h3 className="text-lg font-bold text-gray-800">คุยกับ Hamster</h3>
+        <div className="flex justify-between items-center px-4 py-3 border-b border-white/10">
+          <div className="flex items-center gap-2 text-sm font-medium bg-gradient-to-r from-violet-300 via-purple-300 to-pink-300 bg-clip-text text-transparent">
+            💫 Someone
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-full text-gray-500 hover:bg-gray-200"
+            className="text-purple-300/80 hover:text-pink-100 transition"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
-        {/* Message Body */}
-        <div ref={chatBodyRef} className="flex-1 p-4 overflow-y-auto bg-gray-100">
-          <div className="flex flex-col">
-            {/* ข้อความต้อนรับ */}
-            <MessageBubble message={{ id: 0, text: "Squeak! (Say something!)", sender: "hamster" }} />
-            {/* ข้อความจาก state */}
+        {/* Messages */}
+        <div
+          ref={chatBodyRef}
+          className="flex-1 p-4 space-y-3 overflow-y-auto text-sm text-violet-100"
+        >
+          <AnimatePresence>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <MessageBubble
+                message={{
+                  id: 0,
+                  sender: "hamster",
+                  text: "It’s quiet again tonight.",
+                }}
+              />
+            </motion.div>
             {messages.map((msg) => (
-              <MessageBubble key={msg.id} message={msg} />
+              <motion.div
+                key={msg.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <MessageBubble message={msg} />
+              </motion.div>
             ))}
-          </div>
+          </AnimatePresence>
         </div>
 
-        {/* Input Form */}
-        <form onSubmit={handleSubmit} className="p-4 border-t bg-white flex items-center gap-2">
+        {/* Input */}
+        <form
+          onSubmit={handleSubmit}
+          className="flex items-center gap-2 px-4 py-3 border-t border-white/10 bg-white/5"
+        >
           <input
             type="text"
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
-            placeholder="Say squeak..."
-            className="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="Say something in the quiet..."
+            className="flex-1 bg-transparent text-sm text-violet-200 placeholder-violet-300/40 focus:outline-none"
           />
           <button
             type="submit"
-            className="p-3 bg-blue-500 text-white rounded-full shadow hover:bg-blue-600 disabled:opacity-50"
             disabled={!chatInput.trim()}
+            className="p-2 rounded-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-400 hover:to-pink-400 transition shadow-[0_0_10px_rgba(168,85,247,0.5)] disabled:opacity-40"
           >
-            <Send size={20} />
+            <Send size={16} className="text-white" />
           </button>
         </form>
       </div>
