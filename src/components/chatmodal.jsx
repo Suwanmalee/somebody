@@ -47,7 +47,7 @@ export default function ChatModal({
         {/* Header */}
         <div className="flex justify-between items-center px-4 py-3 border-b border-white/10">
           <div className="flex items-center gap-2 text-sm font-medium bg-gradient-to-r from-violet-300 via-purple-300 to-pink-300 bg-clip-text text-transparent">
-            💫 Someone
+            💭 Someone
           </div>
           <button
             onClick={onClose}
